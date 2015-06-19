@@ -1,0 +1,11 @@
+#!/bin/sh
+{{$user := .Actor.Username}}
+{{$repo := .Repository.FullName}}
+{{range .Push.Changes}}
+	{{if .New.Type == "branch"}}
+		echo 'current change type is branch'
+	{{end}}
+	{{if .New.Name}}
+		echo '"{{$user}}" request for repository "{{$repo}}" {{.New.Type}} "{{.New.Name}}"'
+	{{end}}
+{{end}}

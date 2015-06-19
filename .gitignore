@@ -1,0 +1,8 @@
+# ignore gin development files
+/gin-bin
+/.env
+
+/godson
+/godson.exe
+/cert.pem
+/key.pem
