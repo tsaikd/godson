@@ -3,13 +3,28 @@ package bitbucket
 import (
 	"bytes"
 	"encoding/json"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"os/exec"
+	"path/filepath"
+	"text/template"
 
 	"github.com/tsaikd/KDGoLib/errutil"
 )
+
+var (
+	funcMap = template.FuncMap{
+		"json": funcJson,
+	}
+)
+
+func funcJson(obj interface{}) string {
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return ""
+	}
+	return string(data)
+}
 
 type Configs []Config
 
@@ -49,10 +64,18 @@ func NewConfigFromData(data []byte) (retconf *Config, err error) {
 }
 
 func InitConfig(config *Config) (err error) {
-	if config.tmpl, err = template.ParseFiles(config.TemplateFile); err != nil {
+	data, err := ioutil.ReadFile(config.TemplateFile)
+	if err != nil {
 		return
 	}
 
+	name := filepath.Base(config.TemplateFile)
+	tmpl, err := template.New(name).Funcs(funcMap).Parse(string(data))
+	if err != nil {
+		return
+	}
+
+	config.tmpl = tmpl
 	if config.Provider == "" {
 		config.Provider = "sh"
 	}

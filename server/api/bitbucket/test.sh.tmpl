@@ -1,4 +1,6 @@
 #!/bin/sh
+echo 'request: {{json .}}'
+
 {{$user := .Actor.Username}}
 {{$repo := .Repository.FullName}}
 {{range .Push.Changes}}
