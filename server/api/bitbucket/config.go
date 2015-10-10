@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"text/template"
 
 	"github.com/tsaikd/KDGoLib/errutil"
@@ -35,10 +36,14 @@ type Config struct {
 	// (optional) use provider to eval template result, default: sh, ex: sh
 	Provider string `json:"provider,omitempty"`
 
+	// (optional) queue all execute tasks, default: false
+	SingleWorker bool `json:"single_worker,omitempty"`
+
 	// (required) indicate path of template file, to execute, ex: myshell.sh.tmpl
 	TemplateFile string `json:"template_file,omitempty"`
 
-	tmpl *template.Template
+	tmpl        *template.Template
+	workerMutex *sync.Mutex
 }
 
 func NewConfigFromFile(filename string) (retconf *Config, err error) {
@@ -80,10 +85,15 @@ func InitConfig(config *Config) (err error) {
 		config.Provider = "sh"
 	}
 
+	config.workerMutex = &sync.Mutex{}
+
 	return
 }
 
 func (t *Config) Execute(w io.Writer, context interface{}) (err error) {
+	t.lockWorker()
+	defer t.unlockWorker()
+
 	switch t.Provider {
 	case "sh":
 		return t.executeShell(w, context)
@@ -105,4 +115,18 @@ func (t *Config) executeShell(w io.Writer, context interface{}) (err error) {
 		return
 	}
 	return
+}
+
+// only if SingleWorker
+func (t *Config) lockWorker() {
+	if t.SingleWorker {
+		t.workerMutex.Lock()
+	}
+}
+
+// only if SingleWorker
+func (t *Config) unlockWorker() {
+	if t.SingleWorker {
+		t.workerMutex.Unlock()
+	}
 }

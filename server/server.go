@@ -9,8 +9,8 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/cors"
 	"github.com/martini-contrib/render"
+	"github.com/tsaikd/KDGoLib/cliutil/flagutil"
 	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/KDGoLib/flagutil"
 	"github.com/tsaikd/KDGoLib/martini/errorJson"
 	"github.com/tsaikd/KDGoLib/version"
 
