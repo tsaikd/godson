@@ -52,10 +52,6 @@ var (
 	})
 )
 
-func init() {
-	version.VERSION = "0.0.1"
-}
-
 func Main() {
 	app := cli.NewApp()
 	app.Name = "godson"
