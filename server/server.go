@@ -9,6 +9,7 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/cors"
 	"github.com/martini-contrib/render"
+	"github.com/tsaikd/KDGoLib/cliutil/cmdutil"
 	"github.com/tsaikd/KDGoLib/cliutil/flagutil"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/martini/errorJson"
@@ -20,31 +21,31 @@ import (
 
 var (
 	// basic server info
-	FlagHost = flagutil.AddStringFlag(cli.StringFlag{
+	flagHost = flagutil.AddStringFlag(cli.StringFlag{
 		Name:   "host",
 		EnvVar: "HOST",
 		Value:  "",
 		Usage:  "API listen host",
 	})
-	FlagPort = flagutil.AddIntFlag(cli.IntFlag{
+	flagPort = flagutil.AddIntFlag(cli.IntFlag{
 		Name:   "port",
 		EnvVar: "PORT",
 		Value:  3000,
 		Usage:  "API listen port",
 	})
-	FlagTLS = flagutil.AddBoolFlag(cli.BoolFlag{
+	flagTLS = flagutil.AddBoolFlag(cli.BoolFlag{
 		Name:   "tls",
 		EnvVar: "TLS",
 		Usage:  "API with TLS, 'cert.pem', 'key.pem' should be prepared",
 	})
-	FlagCORS = flagutil.AddStringFlag(cli.StringFlag{
+	flagCORS = flagutil.AddStringFlag(cli.StringFlag{
 		Name:   "cors",
 		EnvVar: "CORS",
 		Value:  "http://localhost:9000",
 		Usage:  "Cross-Origin Resource Sharing",
 	})
 
-	FlagConfig = flagutil.AddStringFlag(cli.StringFlag{
+	flagConfig = flagutil.AddStringFlag(cli.StringFlag{
 		Name:   "config",
 		EnvVar: "GODSON_CONFIG",
 		Value:  "godson.json",
@@ -52,18 +53,20 @@ var (
 	})
 )
 
+// Main is server main entry point
 func Main() {
 	app := cli.NewApp()
 	app.Name = "godson"
 	app.Usage = "continuous integration server written in golang"
 	app.Version = version.String()
-	app.Action = actionWrapper(MainAction)
+	app.Action = actionWrapper(mainAction)
 	app.Flags = flagutil.AllFlags()
+	app.Commands = cmdutil.AllCommands()
 
 	app.Run(os.Args)
 }
 
-func MainAction(c *cli.Context) (err error) {
+func mainAction(c *cli.Context) (err error) {
 	m := martini.Classic()
 	inj := m.Injector
 
@@ -72,26 +75,26 @@ func MainAction(c *cli.Context) (err error) {
 	inj.Map(c)
 	inj.Map(logger)
 
-	config, err := config.NewConfigFromFile(c.GlobalString(FlagConfig.Name))
+	config, err := config.NewConfigFromFile(c.GlobalString(flagConfig.Name))
 	if err != nil {
 		return
 	}
 	inj.Map(&config.Bitbuckets)
 
 	// martini
-	m.Map(errorJson.ReturnErrorProvider())
 	m.Use(render.Renderer())
 	m.Use(cors.Allow(&cors.Options{
-		AllowOrigins: []string{c.GlobalString(FlagCORS.Name)},
+		AllowOrigins: []string{c.GlobalString(flagCORS.Name)},
 	}))
+	errorJson.BindMartini(m.Martini)
 
 	// inject api to martini
 	if err = api.Inject(inj); err != nil {
 		return
 	}
 
-	listenAddr := fmt.Sprintf("%s:%d", c.GlobalString(FlagHost.Name), c.GlobalInt(FlagPort.Name))
-	if c.GlobalBool(FlagTLS.Name) {
+	listenAddr := fmt.Sprintf("%s:%d", c.GlobalString(flagHost.Name), c.GlobalInt(flagPort.Name))
+	if c.GlobalBool(flagTLS.Name) {
 		// HTTPS
 		// To generate a development cert and key, run the following from your *nix terminal:
 		// go run $GOROOT/src/crypto/tls/generate_cert.go --host="localhost"

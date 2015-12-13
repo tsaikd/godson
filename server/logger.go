@@ -1,14 +1,12 @@
 package server
 
 import (
-	"log"
-	"os"
-
 	"github.com/codegangsta/cli"
+	"github.com/tsaikd/KDGoLib/logutil"
 )
 
 var (
-	logger = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
+	logger = logutil.DefaultLogger
 )
 
 func actionWrapper(action func(context *cli.Context) error) func(context *cli.Context) {
