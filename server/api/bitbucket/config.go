@@ -95,7 +95,7 @@ func (t *Config) Execute(w io.Writer, context interface{}) (err error) {
 	defer t.unlockWorker()
 
 	switch t.Provider {
-	case "sh":
+	case "sh", "bash":
 		return t.executeShell(w, context)
 	default:
 		return errutil.New("unknown provider: " + t.Provider)
