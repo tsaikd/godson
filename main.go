@@ -1,9 +1,12 @@
 package main
 
 import (
+	"github.com/tsaikd/KDGoLib/cliutil/cmder"
 	"github.com/tsaikd/godson/server"
 )
 
 func main() {
-	server.Main()
+	cmder.Main(
+		*server.Module,
+	)
 }

@@ -1,11 +1,10 @@
 {
 	"ImportPath": "github.com/tsaikd/godson",
-	"GoVersion": "go1.5.1",
+	"GoVersion": "go1.6",
 	"Deps": [
 		{
-			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0",
-			"Rev": "565493f259bf868adb54d45d5f4c68d405117adf"
+			"ImportPath": "github.com/tsaikd/KDGoLib",
+			"Rev": "b1fa73da50f2317c02cb9c7b6c894db694da839c"
 		}
 	]
 }

@@ -3,70 +3,65 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"os"
 
-	"github.com/codegangsta/cli"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/cors"
 	"github.com/martini-contrib/render"
-	"github.com/tsaikd/KDGoLib/cliutil/cmdutil"
-	"github.com/tsaikd/KDGoLib/cliutil/flagutil"
+	"github.com/tsaikd/KDGoLib/cliutil/cmder"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/martini/errorJson"
-	"github.com/tsaikd/KDGoLib/version"
-
 	"github.com/tsaikd/godson/server/api"
 	"github.com/tsaikd/godson/server/config"
+	"gopkg.in/urfave/cli.v2"
 )
 
-var (
-	// basic server info
-	flagHost = flagutil.AddStringFlag(cli.StringFlag{
-		Name:   "host",
-		EnvVar: "HOST",
-		Value:  "",
-		Usage:  "API listen host",
-	})
-	flagPort = flagutil.AddIntFlag(cli.IntFlag{
-		Name:   "port",
-		EnvVar: "PORT",
-		Value:  3000,
-		Usage:  "API listen port",
-	})
-	flagTLS = flagutil.AddBoolFlag(cli.BoolFlag{
-		Name:   "tls",
-		EnvVar: "TLS",
-		Usage:  "API with TLS, 'cert.pem', 'key.pem' should be prepared",
-	})
-	flagCORS = flagutil.AddStringFlag(cli.StringFlag{
-		Name:   "cors",
-		EnvVar: "CORS",
-		Value:  "http://localhost:9000",
-		Usage:  "Cross-Origin Resource Sharing",
-	})
+// Module info
+var Module = cmder.NewModule("godson").
+	SetUsage("continuous integration server written in golang").
+	AddFlag(
+		&cli.StringFlag{
+			Name:        "host",
+			EnvVars:     []string{"HOST"},
+			Usage:       "API listen host",
+			Destination: &flagHost,
+		},
+		&cli.IntFlag{
+			Name:        "port",
+			EnvVars:     []string{"PORT"},
+			Value:       3000,
+			Usage:       "API listen port",
+			Destination: &flagPort,
+		},
+		&cli.BoolFlag{
+			Name:        "tls",
+			EnvVars:     []string{"TLS"},
+			Usage:       "API with TLS, 'cert.pem', 'key.pem' should be prepared",
+			Destination: &flagTLS,
+		},
+		&cli.StringFlag{
+			Name:        "cors",
+			EnvVars:     []string{"CORS"},
+			Value:       "http://localhost:9000",
+			Usage:       "Cross-Origin Resource Sharing",
+			Destination: &flagCORS,
+		},
+		&cli.StringFlag{
+			Name:        "config",
+			EnvVars:     []string{"GODSON_CONFIG"},
+			Value:       "godson.json",
+			Usage:       "godson config json file path",
+			Destination: &flagConfig,
+		},
+	).
+	SetAction(action)
 
-	flagConfig = flagutil.AddStringFlag(cli.StringFlag{
-		Name:   "config",
-		EnvVar: "GODSON_CONFIG",
-		Value:  "godson.json",
-		Usage:  "godson config json file path",
-	})
-)
+var flagHost string
+var flagPort int
+var flagTLS bool
+var flagCORS string
+var flagConfig string
 
-// Main is server main entry point
-func Main() {
-	app := cli.NewApp()
-	app.Name = "godson"
-	app.Usage = "continuous integration server written in golang"
-	app.Version = version.String()
-	app.Action = actionWrapper(mainAction)
-	app.Flags = flagutil.AllFlags()
-	app.Commands = cmdutil.AllCommands()
-
-	app.Run(os.Args)
-}
-
-func mainAction(c *cli.Context) (err error) {
+func action(c *cli.Context) (err error) {
 	m := martini.Classic()
 	inj := m.Injector
 
@@ -75,7 +70,7 @@ func mainAction(c *cli.Context) (err error) {
 	inj.Map(c)
 	inj.Map(logger)
 
-	config, err := config.NewConfigFromFile(c.GlobalString(flagConfig.Name))
+	config, err := config.NewConfigFromFile(flagConfig)
 	if err != nil {
 		return
 	}
@@ -84,7 +79,7 @@ func mainAction(c *cli.Context) (err error) {
 	// martini
 	m.Use(render.Renderer())
 	m.Use(cors.Allow(&cors.Options{
-		AllowOrigins: []string{c.GlobalString(flagCORS.Name)},
+		AllowOrigins: []string{flagCORS},
 	}))
 	errorJson.BindMartini(m.Martini)
 
@@ -93,8 +88,8 @@ func mainAction(c *cli.Context) (err error) {
 		return
 	}
 
-	listenAddr := fmt.Sprintf("%s:%d", c.GlobalString(flagHost.Name), c.GlobalInt(flagPort.Name))
-	if c.GlobalBool(flagTLS.Name) {
+	listenAddr := fmt.Sprintf("%s:%d", flagHost, flagPort)
+	if flagTLS {
 		// HTTPS
 		// To generate a development cert and key, run the following from your *nix terminal:
 		// go run $GOROOT/src/crypto/tls/generate_cert.go --host="localhost"
