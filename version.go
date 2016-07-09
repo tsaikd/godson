@@ -1,7 +1,7 @@
-package server
+package main
 
 import "github.com/tsaikd/KDGoLib/version"
 
 func init() {
-	version.VERSION = "0.0.3"
+	version.VERSION = "0.0.4"
 }

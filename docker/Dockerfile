@@ -1,6 +1,6 @@
 FROM busybox:ubuntu-14.04
 
-ENV GODSON_VERSION 0.0.3
+ENV GODSON_VERSION 0.0.4
 
 ADD https://github.com/tsaikd/godson/releases/download/${GODSON_VERSION}/godson-Linux-x86_64 /usr/local/bin/godson
 
